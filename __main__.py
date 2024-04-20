@@ -10,7 +10,7 @@ load_dotenv()
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 anthropic_client = anthropic.Client(api_key=ANTHROPIC_API_KEY)
 
-def summarize_pdf(path: str) -> str:
+def summarize_pdf(path: str, strategy: str = "completion") -> str:
     reader = PdfReader(path)
     text = "\n".join([page.extract_text() for page in reader.pages])
 
@@ -19,13 +19,30 @@ def summarize_pdf(path: str) -> str:
 
     # if no_tokens > 100000:
     #     raise ValueError(f"Text is too long {no_tokens}.")
+    res = None
 
-    prompt = f"{anthropic.HUMAN_PROMPT}: Summarize the following text in ~900 words (3 pages), should be readable and in the language of the text:\n\n{text}\n\n{anthropic.AI_PROMPT}:\n\nSummary"
-    res = anthropic_client.completions.create(prompt=prompt, model="claude-2.1", max_tokens_to_sample=2500)
+    if strategy == "completion":
+      prompt = f"{anthropic.HUMAN_PROMPT}: Summarize the following text in ~1600 words (3 pages), should be readable and in the language of the text:\n\n{text}\n\n{anthropic.AI_PROMPT}:\n\nSummary"
+      res = anthropic_client.completions.create(prompt=prompt, model="claude-2.1", max_tokens_to_sample=2500)
+    elif strategy == "messages":
+      res = anthropic_client.messages.create(
+         model="claude-3-opus-20240229",
+         max_tokens=2500,
+         messages=[
+            {
+              "role": "user",
+              "content": f"Summarize the following text in ~1600 words (3 pages), should be readable and in spanish:\n\n{text}\n\n"
+            }
+         ]
+      )
+    else:
+      raise ValueError(f"Unknown strategy {strategy}.")
 
-    print(res.completion)
+    text = res.completion if strategy == "completion" else res.content[0].text
 
-    return res.completion
+    print(text)
+
+    return text
     
 doc_path = os.getenv("DOC_PATH")
 
