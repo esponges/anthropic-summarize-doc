@@ -22,7 +22,7 @@ def summarize_pdf(path: str) -> str:
     #     raise ValueError(f"Text is too long {no_tokens}.")
 
     prompt = f"{anthropic.HUMAN_PROMPT}: Summarize the following text in ~900 words (3 pages), should be readable:\n\n{text}\n\n{anthropic.AI_PROMPT}:\n\nSummary"
-    res = anthropic_client.completion(prompt=prompt, model="claude-3-opus-20240229", max_tokens_to_sample=2500)
+    res = anthropic_client.completions.create(prompt=prompt, model="claude-3-opus-20240229", max_tokens_to_sample=2500)
     # res = anthropic_client.
 
 
